@@ -11,9 +11,13 @@ describe('enqueueDailyJobs', () => {
 		enqueueDailyJobs(db, new Date('2026-07-02T06:05:00Z'));
 		enqueueDailyJobs(db, new Date('2026-07-03T06:00:00Z'));
 
-		expect(db.select({ key: job.key }).from(job).all()).toEqual([
+		expect(db.select({ key: job.key }).from(job).orderBy(job.id).all()).toEqual([
 			{ key: 'mark-overdue:2026-07-02' },
-			{ key: 'mark-overdue:2026-07-03' }
+			{ key: 'bill-schedules:2026-07-02' },
+			{ key: 'queue-schedule-reminders:2026-07-02' },
+			{ key: 'mark-overdue:2026-07-03' },
+			{ key: 'bill-schedules:2026-07-03' },
+			{ key: 'queue-schedule-reminders:2026-07-03' }
 		]);
 	});
 });

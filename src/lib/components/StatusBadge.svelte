@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { statusLabels, type InvoiceStatus } from '#lib/invoices/status.ts';
+	import { scheduleStatusLabels, type ScheduleStatus } from '#lib/schedules/status.ts';
 
-	let { status }: { status: InvoiceStatus } = $props();
+	let { status }: { status: InvoiceStatus | ScheduleStatus } = $props();
+
+	const labels = { ...statusLabels, ...scheduleStatusLabels };
 </script>
 
-<span class="badge {status}">{statusLabels[status]}</span>
+<span class="badge {status}">{labels[status]}</span>
 
 <style>
 	.badge {
@@ -22,7 +25,8 @@
 		--tone: oklch(55% 0.14 250);
 	}
 
-	.paid {
+	.paid,
+	.active {
 		--tone: var(--color-accent);
 	}
 

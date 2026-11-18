@@ -8,6 +8,7 @@
 	const links = [
 		{ path: '', label: 'Dashboard' },
 		{ path: 'invoices', label: 'Invoices' },
+		{ path: 'schedules', label: 'Schedules' },
 		{ path: 'clients', label: 'Clients' },
 		{ path: 'settings', label: 'Settings' }
 	] as const;

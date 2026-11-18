@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { Db } from '../db/client.ts';
 import { createTestClient, createTestDb, createTestUser } from '../db/testing.ts';
 import type { Mail, Mailer } from '../email/mailer.ts';
-import { getInvoice, listInvoices } from '../invoices/invoices.ts';
+import { createInvoice, getInvoice, listInvoices } from '../invoices/invoices.ts';
 import { createDefaultSettings } from '../settings.ts';
 import { issueScheduledInvoice } from './issue.ts';
 import { createSchedule } from './schedules.ts';
@@ -10,6 +10,7 @@ import { createSchedule } from './schedules.ts';
 describe('issueScheduledInvoice', () => {
 	let db: Db;
 	let userId: string;
+	let clientId: number;
 	let scheduleId: number;
 	let sent: Mail[];
 	let failNextSend: boolean;
@@ -29,7 +30,7 @@ describe('issueScheduledInvoice', () => {
 		failNextSend = false;
 		userId = createTestUser(db).id;
 		createDefaultSettings(db, userId, 'Ana Silva Design');
-		const clientId = createTestClient(db, userId).id;
+		clientId = createTestClient(db, userId).id;
 		scheduleId = createSchedule(db, userId, {
 			clientId,
 			intervalMonths: 1,
@@ -83,6 +84,29 @@ describe('issueScheduledInvoice', () => {
 		expect(listInvoices(db, userId)).toHaveLength(1);
 		expect(retried.invoice).toMatchObject({ number: 'INV-2027-0001', status: 'sent' });
 		expect(sent).toHaveLength(1);
+	});
+
+	it('lists the schedule’s invoices, newest first', async () => {
+		await issueScheduledInvoice(db, mailer, userId, scheduleId, '2027-01-31');
+		await issueScheduledInvoice(db, mailer, userId, scheduleId, '2027-02-28');
+		createInvoice(
+			db,
+			userId,
+			{
+				clientId,
+				issueDate: '2027-02-10',
+				dueDate: '2027-02-24',
+				taxRate: 1900,
+				notes: '',
+				lines: [{ description: 'Logo refresh', quantity: 1, unitPrice: 40000 }]
+			},
+			{ prefix: 'INV', currency: 'EUR' }
+		);
+
+		expect(listInvoices(db, userId, { scheduleId })).toMatchObject([
+			{ number: 'INV-2027-0002', issueDate: '2027-02-28' },
+			{ number: 'INV-2027-0001', issueDate: '2027-01-31' }
+		]);
 	});
 
 	it('sends nothing when the date was already sent', async () => {

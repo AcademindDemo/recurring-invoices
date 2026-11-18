@@ -35,6 +35,23 @@ export function createDefaultSettings(db: Db, userId: string, businessName: stri
 	db.insert(settings).values({ userId, businessName }).run();
 }
 
+/** Every time zone an account has chosen, each once. */
+export function accountTimeZones(db: Db): string[] {
+	return db
+		.selectDistinct({ timeZone: settings.timeZone })
+		.from(settings)
+		.all()
+		.map(({ timeZone }) => timeZone);
+}
+
+/** The ids of the accounts in a time zone, as a subquery for `inArray`. */
+export function accountsInTimeZone(db: Db, timeZone: string) {
+	return db
+		.select({ userId: settings.userId })
+		.from(settings)
+		.where(eq(settings.timeZone, timeZone));
+}
+
 export function getSettings(db: Db, userId: string) {
 	const row = db.select().from(settings).where(eq(settings.userId, userId)).get();
 	if (!row) throw new Error(`No settings for user ${userId}`);

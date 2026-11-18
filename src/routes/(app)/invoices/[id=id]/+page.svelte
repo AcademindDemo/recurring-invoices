@@ -51,6 +51,13 @@
 	<dd>
 		<a href={resolve('/(app)/clients/[id=id]', { id: invoice.client.id })}>{invoice.client.name}</a>
 	</dd>
+	{#if invoice.scheduleId}
+		<dt>Recurring</dt>
+		<dd>
+			<a href={resolve('/(app)/schedules/[id=id]', { id: invoice.scheduleId })}>View the schedule</a
+			>
+		</dd>
+	{/if}
 	<dt>Issued</dt>
 	<dd>{formatDate(invoice.issueDate)}</dd>
 	<dt>Due</dt>

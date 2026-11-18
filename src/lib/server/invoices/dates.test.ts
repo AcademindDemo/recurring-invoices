@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addDays, addMonths, today } from './dates.ts';
+import { addDays, addMonths, today, zonedTime } from './dates.ts';
 
 describe('today', () => {
 	it('returns the date as YYYY-MM-DD', () => {
@@ -44,5 +44,26 @@ describe('addMonths', () => {
 		expect(addMonths('2028-01-31', 1)).toBe('2028-02-29');
 		expect(addMonths('2028-02-29', 12)).toBe('2029-02-28');
 		expect(addMonths('2028-02-29', 48)).toBe('2032-02-29');
+	});
+});
+
+describe('zonedTime', () => {
+	it('is the moment a time of day happens in a time zone', () => {
+		expect(zonedTime('2027-01-28', '09:00', 'Pacific/Auckland')).toEqual(
+			new Date('2027-01-27T20:00:00Z')
+		);
+		expect(zonedTime('2027-01-28', '09:00', 'America/New_York')).toEqual(
+			new Date('2027-01-28T14:00:00Z')
+		);
+		expect(zonedTime('2027-01-28', '09:00', 'UTC')).toEqual(new Date('2027-01-28T09:00:00Z'));
+	});
+
+	it('follows daylight saving time', () => {
+		expect(zonedTime('2026-10-23', '09:00', 'Europe/Berlin')).toEqual(
+			new Date('2026-10-23T07:00:00Z')
+		);
+		expect(zonedTime('2026-10-26', '09:00', 'Europe/Berlin')).toEqual(
+			new Date('2026-10-26T08:00:00Z')
+		);
 	});
 });

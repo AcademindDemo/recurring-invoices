@@ -2,6 +2,7 @@ import { relations } from 'drizzle-orm';
 import { index, integer, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { paymentMethods } from '../../invoices/payments.ts';
 import { invoiceStatuses } from '../../invoices/status.ts';
+import { scheduleStatuses } from '../../schedules/status.ts';
 import { user } from './auth.schema.ts';
 
 export * from './auth.schema.ts';
@@ -114,8 +115,6 @@ export const settings = sqliteTable('settings', {
 	// IANA name, like Europe/Berlin
 	timeZone: text('time_zone').notNull().default('UTC')
 });
-
-export const scheduleStatuses = ['active', 'paused', 'ended'] as const;
 
 export const recurringSchedule = sqliteTable(
 	'recurring_schedule',

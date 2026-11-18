@@ -78,6 +78,7 @@ const invoiceOrders: Record<InvoiceSort, SQL[]> = {
 
 export type InvoiceFilter = {
 	clientId?: number;
+	scheduleId?: number;
 	status?: InvoiceStatus;
 	sort?: InvoiceSort;
 };
@@ -100,6 +101,7 @@ export function listInvoices(db: Db, userId: string, filter: InvoiceFilter = {})
 			and(
 				eq(invoice.userId, userId),
 				filter.clientId === undefined ? undefined : eq(invoice.clientId, filter.clientId),
+				filter.scheduleId === undefined ? undefined : eq(invoice.scheduleId, filter.scheduleId),
 				filter.status === undefined ? undefined : eq(invoice.status, filter.status)
 			)
 		)

@@ -1,6 +1,14 @@
 import { formatDate } from '../../format.ts';
+import { calculateTotals } from '../../invoices/totals.ts';
 import { formatMoney } from '../../money.ts';
-import type { Client, Invoice, InvoiceLine, Settings } from '../db/schema.ts';
+import type {
+	Client,
+	Invoice,
+	InvoiceLine,
+	RecurringSchedule,
+	RecurringScheduleLine,
+	Settings
+} from '../db/schema.ts';
 import type { Mail } from './mailer.ts';
 
 type InvoiceEmail = {
@@ -43,6 +51,49 @@ ${invoice.lines
 ${paragraph(invoice.notes)}
 ${paragraph(settings.paymentInstructions)}
 <p>Thank you,<br>${escape(settings.businessName)}</p>
+</div>`;
+
+	return { subject, text, html };
+}
+
+type ScheduleReminderEmail = {
+	schedule: RecurringSchedule & { client: Client; lines: RecurringScheduleLine[] };
+	billingDate: string;
+	settings: Settings;
+	link: string;
+};
+
+/** Tells the business which invoice a schedule sends in three days, while there is time to change it. */
+export function scheduleReminderEmail({
+	schedule,
+	billingDate,
+	settings,
+	link
+}: ScheduleReminderEmail): Omit<Mail, 'to'> {
+	const money = (cents: number) => formatMoney(cents, settings.currency);
+	const { total } = calculateTotals(schedule.lines, schedule.taxRate);
+	const when = formatDate(billingDate);
+	const subject = `${schedule.client.name} is billed ${money(total)} on ${when}`;
+
+	const text = [
+		`On ${when}, Fernbill sends ${schedule.client.name} their recurring invoice for ${money(total)}:`,
+		schedule.lines
+			.map((line) => `${line.description}: ${line.quantity} × ${money(line.unitPrice)}`)
+			.join('\n'),
+		`To change, pause or end it before then: ${link}`
+	].join('\n\n');
+
+	const html = `<div style="${styles.body}">
+<p>On ${when}, Fernbill sends ${escape(schedule.client.name)} their recurring invoice for <strong>${money(total)}</strong>:</p>
+<table style="${styles.table}">
+${schedule.lines
+	.map(
+		(line) =>
+			`<tr><td style="${styles.cell}">${escape(line.description)}</td><td style="${styles.number}">${line.quantity} × ${money(line.unitPrice)}</td></tr>`
+	)
+	.join('\n')}
+</table>
+<p><a href="${escape(link)}">Change, pause or end it</a> before then.</p>
 </div>`;
 
 	return { subject, text, html };

@@ -2,7 +2,7 @@
 
 Invoicing for freelancers and small agencies: clients, invoices with line items and tax, and sending them by email.
 
-> **Course checkpoint `threads`.** Fernbill is the closing project of Academind's course _Claude Code: Fundamentals_, a fictional four-person team's invoicing app that is never deployed. In the course's last section you join the team and ship its top backlog item, recurring invoices. This tag is where Splitting the Rest into a Project (`ccf-project-for-the-rest`) ends and Reviewing and Merging the Threads (`ccf-review-the-threads`) starts. [Course checkpoints](#course-checkpoints) lists every tag.
+> **Course checkpoint `merged`.** Fernbill is the closing project of Academind's course _Claude Code: Fundamentals_, a fictional four-person team's invoicing app that is never deployed. In the course's last section you join the team and ship its top backlog item, recurring invoices. This tag is where Reviewing and Merging the Threads (`ccf-review-the-threads`) ends and Releasing Recurring Invoices (`ccf-ship-and-watch`) starts. [Course checkpoints](#course-checkpoints) lists every tag.
 
 ## Getting started
 
