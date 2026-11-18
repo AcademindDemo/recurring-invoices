@@ -1,7 +1,7 @@
 {
 	"name": "fernbill",
 	"private": true,
-	"version": "0.0.1",
+	"version": "1.0.0",
 	"type": "module",
 	"packageManager": "pnpm@12.14.0",
 	"engines": {

@@ -1,4 +1,6 @@
+import { execFileSync } from 'node:child_process';
 import { expect, type Page } from '@playwright/test';
+import { serverEnv } from './server.ts';
 
 /** Signs up a new user with a unique email and lands on the dashboard. */
 export async function signUp(page: Page, name = 'Ana Silva') {
@@ -29,4 +31,9 @@ export async function sendInvoice(page: Page, description: string, unitPrice: st
 	await page.getByRole('button', { name: 'Save draft' }).click();
 	await page.getByRole('button', { name: 'Send to client' }).click();
 	await expect(page.getByText('to accounts@kauri.example')).toBeVisible();
+}
+
+/** Runs the jobs that are due against the e2e database, like the scheduler does every few minutes. */
+export function runJobs() {
+	execFileSync('pnpm', ['jobs:run'], { env: { ...process.env, ...serverEnv } });
 }

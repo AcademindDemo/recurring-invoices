@@ -1,6 +1,5 @@
 import { defineConfig } from '@playwright/test';
-
-const port = 4173;
+import { port, serverEnv } from './e2e/server.ts';
 
 export default defineConfig({
 	testDir: 'e2e',
@@ -11,12 +10,6 @@ export default defineConfig({
 		// A fresh database for every run
 		command: 'rm -f e2e.db* && pnpm db:migrate && pnpm build && pnpm preview',
 		port,
-		env: {
-			DATABASE_URL: 'e2e.db',
-			ORIGIN: `http://localhost:${port}`,
-			BETTER_AUTH_SECRET: 'e2e-secret-not-for-production-00000000',
-			MAIL_TRANSPORT: 'preview',
-			MAIL_PREVIEW_DIR: 'test-results/mail'
-		}
+		env: serverEnv
 	}
 });

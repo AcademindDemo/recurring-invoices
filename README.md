@@ -2,7 +2,7 @@
 
 Invoicing for freelancers and small agencies: clients, invoices with line items and tax, and sending them by email.
 
-> **Course checkpoint `merged`.** Fernbill is the closing project of Academind's course _Claude Code: Fundamentals_, a fictional four-person team's invoicing app that is never deployed. In the course's last section you join the team and ship its top backlog item, recurring invoices. This tag is where Reviewing and Merging the Threads (`ccf-review-the-threads`) ends and Releasing Recurring Invoices (`ccf-ship-and-watch`) starts. [Course checkpoints](#course-checkpoints) lists every tag.
+> **Course checkpoint `released`.** Fernbill is the closing project of Academind's course _Claude Code: Fundamentals_, a fictional four-person team's invoicing app that is never deployed. In the course's last section you join the team and ship its top backlog item, recurring invoices. This tag is the end state, where Releasing Recurring Invoices (`ccf-ship-and-watch`) ends. [Course checkpoints](#course-checkpoints) lists every tag.
 
 ## Getting started
 
@@ -35,7 +35,7 @@ To send for real, build the app and set `MAIL_TRANSPORT=smtp` plus the `SMTP_*` 
 
 ## Background jobs
 
-Work that doesn't belong in a request runs as a job: a row in the `job` table that `pnpm jobs:run` picks up. Today there is one, `mark-overdue`, queued once a day.
+Work that doesn't belong in a request runs as a job: a row in the `job` table that `pnpm jobs:run` picks up. Three are queued once a day, in this order: `mark-overdue`, `bill-schedules` (sends the invoices of recurring schedules due today) and `queue-schedule-reminders` (queues a `schedule-reminder` for 09:00 in the account's time zone, three days before each billing date).
 
 In production, start the runner every five minutes, e.g. with cron:
 
