@@ -1,14 +1,13 @@
 <script lang="ts">
 	import { calculateTotals, formatTaxRate, lineAmount } from '#lib/invoices/totals.ts';
 	import { formatMoney, parseMoney } from '#lib/money.ts';
-
-	export type LineValues = { description: string; quantity: string; unitPrice: string };
+	import type { LineFormValues } from '#lib/server/forms.ts';
 
 	let {
 		lines = $bindable(),
 		taxRate,
 		currency
-	}: { lines: LineValues[]; taxRate: number; currency: string } = $props();
+	}: { lines: LineFormValues[]; taxRate: number; currency: string } = $props();
 
 	const amounts = $derived(
 		lines.map((line) => ({

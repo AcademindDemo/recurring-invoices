@@ -1,37 +1,29 @@
 import { and, asc, desc, eq, type SQL } from 'drizzle-orm';
 import { z } from 'zod';
-import { parseMoney, toMoneyInput } from '../../money.ts';
+import { toMoneyInput } from '../../money.ts';
 import type { InvoiceSort } from '../../invoices/sort.ts';
 import type { InvoiceStatus } from '../../invoices/status.ts';
 import { calculateTotals, lineAmount } from '../../invoices/totals.ts';
 import type { Db } from '../db/client.ts';
-import { taxRateField } from '../forms.ts';
+import {
+	formText,
+	isoDateField,
+	lineFormValues,
+	linesField,
+	taxRateField,
+	type LineFormValues
+} from '../forms.ts';
 import { client, invoice, invoiceLine, type Invoice, type InvoiceLine } from '../db/schema.ts';
 import { formatInvoiceNumber, nextInvoiceSequence } from './numbering.ts';
-
-const isoDate = z.iso.date({ error: 'Enter a date.' });
-
-const lineInput = z.object({
-	description: z.string().trim().min(1, 'Describe each line.'),
-	quantity: z.coerce.number<string>().positive('Quantities must be above zero.'),
-	unitPrice: z.string().transform((value, ctx) => {
-		const cents = parseMoney(value);
-		if (cents === undefined) {
-			ctx.addIssue({ code: 'custom', message: 'Enter prices like 120 or 120.50.' });
-			return z.NEVER;
-		}
-		return cents;
-	})
-});
 
 export const invoiceInput = z
 	.object({
 		clientId: z.coerce.number<string>().int().positive('Choose a client.'),
-		issueDate: isoDate,
-		dueDate: isoDate,
+		issueDate: isoDateField,
+		dueDate: isoDateField,
 		taxRate: taxRateField,
 		notes: z.string().trim(),
-		lines: z.array(lineInput).min(1, 'Add at least one line.')
+		lines: linesField
 	})
 	.refine((input) => input.dueDate >= input.issueDate, {
 		path: ['dueDate'],
@@ -46,26 +38,17 @@ export type InvoiceFormValues = {
 	dueDate: string;
 	taxRate: string;
 	notes: string;
-	lines: { description: string; quantity: string; unitPrice: string }[];
+	lines: LineFormValues[];
 };
 
-/** The invoice form posts one description, quantity and unit price per line. */
 export function invoiceFormValues(form: FormData): InvoiceFormValues {
-	const text = (value: FormDataEntryValue | null | undefined) =>
-		typeof value === 'string' ? value : '';
-	const quantities = form.getAll('quantity');
-	const unitPrices = form.getAll('unitPrice');
 	return {
-		clientId: text(form.get('clientId')),
-		issueDate: text(form.get('issueDate')),
-		dueDate: text(form.get('dueDate')),
-		taxRate: text(form.get('taxRate')),
-		notes: text(form.get('notes')),
-		lines: form.getAll('description').map((description, i) => ({
-			description: text(description),
-			quantity: text(quantities[i]),
-			unitPrice: text(unitPrices[i])
-		}))
+		clientId: formText(form.get('clientId')),
+		issueDate: formText(form.get('issueDate')),
+		dueDate: formText(form.get('dueDate')),
+		taxRate: formText(form.get('taxRate')),
+		notes: formText(form.get('notes')),
+		lines: lineFormValues(form)
 	};
 }
 
@@ -137,13 +120,13 @@ export function getInvoice(db: Db, userId: string, id: number) {
 		.sync();
 }
 
-type NumberingOptions = { prefix: string; currency: string };
+type CreateOptions = { prefix: string; currency: string; scheduleId?: number };
 
 export function createInvoice(
 	db: Db,
 	userId: string,
 	input: InvoiceInput,
-	{ prefix, currency }: NumberingOptions
+	{ prefix, currency, scheduleId }: CreateOptions
 ) {
 	const year = Number(input.issueDate.slice(0, 4));
 	return db.transaction((tx) => {
@@ -161,6 +144,7 @@ export function createInvoice(
 				currency,
 				taxRate: input.taxRate,
 				notes: input.notes || null,
+				scheduleId,
 				...calculateTotals(input.lines, input.taxRate)
 			})
 			.returning()

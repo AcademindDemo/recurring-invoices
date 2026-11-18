@@ -53,6 +53,7 @@ export const invoice = sqliteTable(
 		sentAt: integer('sent_at', { mode: 'timestamp_ms' }),
 		// The date of the payment that covered the total
 		paidOn: text('paid_on'),
+		scheduleId: integer('schedule_id').references(() => recurringSchedule.id),
 		createdAt: createdAt()
 	},
 	(table) => [
@@ -111,6 +112,45 @@ export const settings = sqliteTable('settings', {
 	timeZone: text('time_zone').notNull().default('UTC')
 });
 
+export const scheduleStatuses = ['active', 'paused', 'ended'] as const;
+
+export const recurringSchedule = sqliteTable(
+	'recurring_schedule',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		clientId: integer('client_id')
+			.notNull()
+			.references(() => client.id),
+		// 1 for monthly, 12 for yearly
+		intervalMonths: integer('interval_months').notNull(),
+		// YYYY-MM-DD; later billing dates keep its day of the month
+		firstBillingDate: text('first_billing_date').notNull(),
+		taxRate: integer('tax_rate').notNull(),
+		notes: text('notes'),
+		status: text('status', { enum: scheduleStatuses }).notNull().default('active'),
+		createdAt: createdAt()
+	},
+	(table) => [index('recurring_schedule_user_id_idx').on(table.userId)]
+);
+
+export const recurringScheduleLine = sqliteTable(
+	'recurring_schedule_line',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		scheduleId: integer('schedule_id')
+			.notNull()
+			.references(() => recurringSchedule.id, { onDelete: 'cascade' }),
+		position: integer('position').notNull(),
+		description: text('description').notNull(),
+		quantity: real('quantity').notNull(),
+		unitPrice: integer('unit_price').notNull()
+	},
+	(table) => [index('recurring_schedule_line_schedule_id_idx').on(table.scheduleId)]
+);
+
 export const jobStatuses = ['queued', 'running', 'done', 'failed'] as const;
 
 export const job = sqliteTable(
@@ -137,6 +177,10 @@ export const clientRelations = relations(client, ({ many }) => ({
 
 export const invoiceRelations = relations(invoice, ({ one, many }) => ({
 	client: one(client, { fields: [invoice.clientId], references: [client.id] }),
+	schedule: one(recurringSchedule, {
+		fields: [invoice.scheduleId],
+		references: [recurringSchedule.id]
+	}),
 	lines: many(invoiceLine),
 	payments: many(payment)
 }));
@@ -149,9 +193,24 @@ export const paymentRelations = relations(payment, ({ one }) => ({
 	invoice: one(invoice, { fields: [payment.invoiceId], references: [invoice.id] })
 }));
 
+export const recurringScheduleRelations = relations(recurringSchedule, ({ one, many }) => ({
+	client: one(client, { fields: [recurringSchedule.clientId], references: [client.id] }),
+	lines: many(recurringScheduleLine),
+	invoices: many(invoice)
+}));
+
+export const recurringScheduleLineRelations = relations(recurringScheduleLine, ({ one }) => ({
+	schedule: one(recurringSchedule, {
+		fields: [recurringScheduleLine.scheduleId],
+		references: [recurringSchedule.id]
+	})
+}));
+
 export type Client = typeof client.$inferSelect;
 export type Invoice = typeof invoice.$inferSelect;
 export type InvoiceLine = typeof invoiceLine.$inferSelect;
 export type Payment = typeof payment.$inferSelect;
 export type Settings = typeof settings.$inferSelect;
 export type Job = typeof job.$inferSelect;
+export type RecurringSchedule = typeof recurringSchedule.$inferSelect;
+export type RecurringScheduleLine = typeof recurringScheduleLine.$inferSelect;

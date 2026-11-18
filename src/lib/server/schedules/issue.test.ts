@@ -1,0 +1,68 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import type { Db } from '../db/client.ts';
+import { createTestClient, createTestDb, createTestUser } from '../db/testing.ts';
+import type { Mail, Mailer } from '../email/mailer.ts';
+import { getInvoice } from '../invoices/invoices.ts';
+import { createDefaultSettings } from '../settings.ts';
+import { issueScheduledInvoice } from './issue.ts';
+import { createSchedule } from './schedules.ts';
+
+describe('issueScheduledInvoice', () => {
+	let db: Db;
+	let userId: string;
+	let scheduleId: number;
+	let sent: Mail[];
+	const mailer: Mailer = {
+		async send(mail) {
+			sent.push(mail);
+		}
+	};
+
+	beforeEach(() => {
+		db = createTestDb();
+		sent = [];
+		userId = createTestUser(db).id;
+		createDefaultSettings(db, userId, 'Ana Silva Design');
+		const clientId = createTestClient(db, userId).id;
+		scheduleId = createSchedule(db, userId, {
+			clientId,
+			intervalMonths: 1,
+			firstBillingDate: '2027-01-31',
+			taxRate: 1900,
+			notes: 'Monthly retainer',
+			lines: [
+				{ description: 'Design retainer', quantity: 1, unitPrice: 150000 },
+				{ description: 'Support hours', quantity: 2.5, unitPrice: 3333 }
+			]
+		}).id;
+	});
+
+	it('creates the billing date’s invoice with the schedule’s lines and sends it', async () => {
+		const result = await issueScheduledInvoice(db, mailer, userId, scheduleId, '2027-02-28');
+
+		expect(getInvoice(db, userId, result.invoice!.id)).toMatchObject({
+			number: 'INV-2027-0001',
+			status: 'sent',
+			issueDate: '2027-02-28',
+			dueDate: '2027-03-14',
+			currency: 'EUR',
+			scheduleId,
+			notes: 'Monthly retainer',
+			lines: [{ description: 'Design retainer' }, { description: 'Support hours', amount: 8333 }]
+		});
+		expect(sent).toMatchObject([{ to: 'accounts@kauri.example' }]);
+	});
+
+	it('rounds tax once on the subtotal, like any invoice', async () => {
+		const result = await issueScheduledInvoice(db, mailer, userId, scheduleId, '2027-02-28');
+
+		expect(result.invoice).toMatchObject({ subtotal: 158333, tax: 30083, total: 188416 });
+	});
+
+	it('numbers its invoices in the normal sequence', async () => {
+		await issueScheduledInvoice(db, mailer, userId, scheduleId, '2027-01-31');
+		const second = await issueScheduledInvoice(db, mailer, userId, scheduleId, '2027-02-28');
+
+		expect(second.invoice?.number).toBe('INV-2027-0002');
+	});
+});

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addDays, today } from './dates.ts';
+import { addDays, addMonths, today } from './dates.ts';
 
 describe('today', () => {
 	it('returns the date as YYYY-MM-DD', () => {
@@ -19,5 +19,25 @@ describe('addDays', () => {
 
 	it('is not affected by daylight saving changes', () => {
 		expect(addDays('2026-03-25', 7)).toBe('2026-04-01');
+	});
+});
+
+describe('addMonths', () => {
+	it('keeps the day of the month', () => {
+		expect(addMonths('2027-01-15', 1)).toBe('2027-02-15');
+		expect(addMonths('2027-11-15', 3)).toBe('2028-02-15');
+	});
+
+	it('bills the 31st on the last day of shorter months', () => {
+		expect(addMonths('2027-01-31', 1)).toBe('2027-02-28');
+		expect(addMonths('2027-01-31', 2)).toBe('2027-03-31');
+		expect(addMonths('2027-01-31', 3)).toBe('2027-04-30');
+		expect(addMonths('2027-01-31', 4)).toBe('2027-05-31');
+	});
+
+	it('uses 29 February in leap years', () => {
+		expect(addMonths('2028-01-31', 1)).toBe('2028-02-29');
+		expect(addMonths('2028-02-29', 12)).toBe('2029-02-28');
+		expect(addMonths('2028-02-29', 48)).toBe('2032-02-29');
 	});
 });
