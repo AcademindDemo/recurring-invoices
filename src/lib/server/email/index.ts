@@ -8,16 +8,15 @@ import {
 	SMTP_PORT,
 	SMTP_USER
 } from '$app/env/private';
-import { createPreviewMailer, createSmtpMailer } from './mailer.ts';
+import { createMailer } from './mailer.ts';
 
 // Development never sends real mail, whatever MAIL_TRANSPORT says
-export const mailer =
-	MAIL_TRANSPORT === 'smtp' && !dev
-		? createSmtpMailer({
-				from: MAIL_FROM,
-				host: SMTP_HOST,
-				port: SMTP_PORT,
-				user: SMTP_USER,
-				password: SMTP_PASSWORD
-			})
-		: createPreviewMailer({ dir: MAIL_PREVIEW_DIR, from: MAIL_FROM });
+export const mailer = createMailer({
+	MAIL_TRANSPORT: dev ? 'preview' : MAIL_TRANSPORT,
+	MAIL_FROM,
+	MAIL_PREVIEW_DIR,
+	SMTP_HOST,
+	SMTP_PORT,
+	SMTP_USER,
+	SMTP_PASSWORD
+});

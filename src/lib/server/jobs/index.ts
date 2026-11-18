@@ -10,8 +10,8 @@ export const handlers: JobHandlers = {
 /** Job types queued once a day. */
 const daily = ['mark-overdue'];
 
-/** Queues today's daily jobs unless they are already queued. */
+/** Queues today's daily jobs, keyed by the UTC date, unless they are already queued. */
 export function enqueueDailyJobs(db: Db, now = new Date()) {
-	const date = today(now);
+	const date = today(now, 'UTC');
 	for (const type of daily) enqueue(db, type, { date }, { runAt: now, key: `${type}:${date}` });
 }

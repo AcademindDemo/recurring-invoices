@@ -16,7 +16,7 @@ import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = ({ url }) => {
 	const user = requireUser();
 	const settings = getSettings(db, user.id);
-	const issueDate = today();
+	const issueDate = today(new Date(), settings.timeZone);
 	const values: InvoiceFormValues = {
 		clientId: url.searchParams.get('client') ?? '',
 		issueDate,

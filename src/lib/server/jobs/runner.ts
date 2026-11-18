@@ -1,11 +1,14 @@
 import { and, asc, eq, lte, sql } from 'drizzle-orm';
 import type { Db } from '../db/client.ts';
 import { job, type Job } from '../db/schema.ts';
+import type { Mailer } from '../email/mailer.ts';
 
 export const MAX_ATTEMPTS = 5;
 const FIRST_RETRY_DELAY_MS = 5 * 60_000;
 
-export type JobContext = { db: Db; payload: unknown; now: Date };
+/** What every handler can use: the database, the mailer and the app's public URL for links in mail. */
+export type JobServices = { db: Db; mailer: Mailer; origin: string };
+export type JobContext = JobServices & { payload: unknown; now: Date };
 export type JobHandler = (context: JobContext) => void | Promise<void>;
 export type JobHandlers = Record<string, JobHandler>;
 
@@ -30,14 +33,15 @@ export function retryDelay(attempts: number): number {
  * Runs every queued job that is due, oldest first. A job that throws is queued again, waiting
  * longer after each attempt, until it has failed MAX_ATTEMPTS times.
  */
-export async function runDueJobs(db: Db, handlers: JobHandlers, now = new Date()) {
+export async function runDueJobs(services: JobServices, handlers: JobHandlers, now = new Date()) {
+	const { db } = services;
 	const summary = { done: 0, retried: 0, failed: 0 };
 
 	for (let next = claimNext(db, now); next; next = claimNext(db, now)) {
 		try {
 			const handler = handlers[next.type];
 			if (!handler) throw new Error(`No handler for job type "${next.type}"`);
-			await handler({ db, payload: next.payload, now });
+			await handler({ ...services, payload: next.payload, now });
 			update(db, next.id, { status: 'done', finishedAt: new Date() });
 			summary.done++;
 		} catch (error) {

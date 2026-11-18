@@ -3,7 +3,12 @@ import { addDays, addMonths, today } from './dates.ts';
 
 describe('today', () => {
 	it('returns the date as YYYY-MM-DD', () => {
-		expect(today(new Date('2026-03-10T12:00:00Z'))).toBe('2026-03-10');
+		expect(today(new Date('2026-03-10T12:00:00Z'), 'UTC')).toBe('2026-03-10');
+	});
+
+	it('is the date in the account’s time zone, not in UTC', () => {
+		expect(today(new Date('2026-10-13T22:30:00Z'), 'Pacific/Auckland')).toBe('2026-10-14');
+		expect(today(new Date('2026-10-14T02:00:00Z'), 'America/New_York')).toBe('2026-10-13');
 	});
 });
 

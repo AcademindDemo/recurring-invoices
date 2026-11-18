@@ -1,8 +1,8 @@
 // Invoice dates are calendar dates stored as YYYY-MM-DD.
 
-/** Today's date as YYYY-MM-DD. */
-export function today(now = new Date()): string {
-	return now.toISOString().slice(0, 10);
+/** The date as YYYY-MM-DD in a time zone, like an account's `Pacific/Auckland`. */
+export function today(now: Date, timeZone: string): string {
+	return now.toLocaleDateString('en-CA', { timeZone });
 }
 
 export function addDays(isoDate: string, days: number): string {

@@ -19,7 +19,7 @@ export const load: PageServerLoad = ({ url }) => {
 	const values: ScheduleFormValues = {
 		clientId: url.searchParams.get('client') ?? '',
 		intervalMonths: '1',
-		firstBillingDate: today(),
+		firstBillingDate: today(new Date(), settings.timeZone),
 		taxRate: String(settings.defaultTaxRate / 100),
 		notes: '',
 		lines: [{ description: '', quantity: '1', unitPrice: '' }]

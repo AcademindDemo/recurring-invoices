@@ -40,8 +40,8 @@ A newcomer's map of Fernbill's invoices, payments and background jobs: where thi
 
 ## Dates and time zones
 
-- Calendar dates are `YYYY-MM-DD` strings. **`today()` (`invoices/dates.ts:4`) is `now.toISOString().slice(0, 10)`, the UTC date.** It sets the new invoice's issue and due dates, the default payment date, the overdue cut-off and the dashboard's month.
-- `settings.timeZone` (an IANA name, default `UTC`) is only used to format the "Sent" time (`formatTimestamp`). For a business far from UTC, "today" can be the wrong day.
+- Calendar dates are `YYYY-MM-DD` strings. `today(now, timeZone)` (`invoices/dates.ts`) is the date in a time zone. Pages use the account's `settings.timeZone` for the new invoice's issue and due dates, the default payment date and the dashboard's month; `mark-overdue` works out each account's date.
+- `settings.timeZone` (an IANA name, default `UTC`) sets the account's dates and formats the "Sent" time (`formatTimestamp`).
 
 ## Worth knowing before changing things
 

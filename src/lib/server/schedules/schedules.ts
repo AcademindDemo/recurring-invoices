@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, asc, eq, lte } from 'drizzle-orm';
 import { z } from 'zod';
 import { scheduleIntervals } from '../../schedules/interval.ts';
 import type { Db } from '../db/client.ts';
@@ -55,6 +55,7 @@ export function createSchedule(db: Db, userId: string, input: ScheduleInput) {
 				clientId: input.clientId,
 				intervalMonths: input.intervalMonths,
 				firstBillingDate: input.firstBillingDate,
+				nextBillingOn: input.firstBillingDate,
 				taxRate: input.taxRate,
 				notes: input.notes || null
 			})
@@ -79,6 +80,16 @@ export function getSchedule(db: Db, userId: string, id: number) {
 			}
 		})
 		.sync();
+}
+
+/** Every account's active schedules whose next billing date is on or before a date, soonest first. */
+export function schedulesBillingBy(db: Db, date: string) {
+	return db
+		.select()
+		.from(recurringSchedule)
+		.where(and(eq(recurringSchedule.status, 'active'), lte(recurringSchedule.nextBillingOn, date)))
+		.orderBy(asc(recurringSchedule.nextBillingOn), asc(recurringSchedule.id))
+		.all();
 }
 
 type BillingRule = Pick<RecurringSchedule, 'firstBillingDate' | 'intervalMonths'>;

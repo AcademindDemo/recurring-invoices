@@ -2,7 +2,7 @@
 
 Invoicing for freelancers and small agencies: clients, invoices with line items and tax, and sending them by email.
 
-> **Course checkpoint `review-1`.** Fernbill is the closing project of Academind's course _Claude Code: Fundamentals_, a fictional four-person team's invoicing app that is never deployed. In the course's last section you join the team and ship its top backlog item, recurring invoices. This tag is where Reviewing in the Desktop App (`ccf-review-in-desktop`) ends and Splitting the Rest into a Project (`ccf-project-for-the-rest`) starts. [Course checkpoints](#course-checkpoints) lists every tag.
+> **Course checkpoint `threads`.** Fernbill is the closing project of Academind's course _Claude Code: Fundamentals_, a fictional four-person team's invoicing app that is never deployed. In the course's last section you join the team and ship its top backlog item, recurring invoices. This tag is where Splitting the Rest into a Project (`ccf-project-for-the-rest`) ends and Reviewing and Merging the Threads (`ccf-review-the-threads`) starts. [Course checkpoints](#course-checkpoints) lists every tag.
 
 ## Getting started
 
@@ -15,7 +15,17 @@ pnpm db:migrate
 pnpm dev
 ```
 
-Open http://localhost:5173 and create an account.
+Open http://localhost:5173 and create an account, or fill the database with demo data first.
+
+## Demo data
+
+`pnpm db:seed` fills an empty database with a demo account, four clients and invoices in every status (draft, sent, paid, overdue, some part-paid) from the last few months. Sign in as `demo@fernbill.local` with the password `fernbill-demo`.
+
+It refuses a database that already has accounts, so it can't touch real data. To start over:
+
+```sh
+rm local.db && pnpm db:migrate && pnpm db:seed
+```
 
 ## Mail in development
 

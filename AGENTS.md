@@ -18,6 +18,7 @@ pnpm db:migrate
 - `pnpm test`: unit tests (Vitest).
 - `pnpm test:e2e`: Playwright against a fresh `e2e.db`.
 - `pnpm jobs:run`: runs the background jobs that are due.
+- `pnpm db:seed`: fills an empty `local.db` with a demo account (`demo@fernbill.local`, `fernbill-demo`) and invoices in every status.
 - `pnpm verify`: everything CI runs (lint, types, unit tests, e2e). Run it before you push.
 
 ## Layout
@@ -35,7 +36,7 @@ pnpm db:migrate
 ## Conventions
 
 - Money is integer cents. Tax rates are basis points (1900 = 19 %). Format with `formatMoney`.
-- Calendar dates (issue, due, paid on) are `YYYY-MM-DD` strings; moments are `Date`s.
+- Calendar dates (issue, due, paid on) are `YYYY-MM-DD` strings; moments are `Date`s. Today's date is `today(now, timeZone)` in the account's `settings.timeZone`, never the UTC date.
 - Server functions take `db` first, then the user id, and every query is scoped to that user.
 - Forms post to actions. The zod schema lives next to the server code; actions run `parseForm` and return `fail(400, { errors, values })`.
 - Import from `#lib/...` with the `.ts` extension.
@@ -45,7 +46,7 @@ pnpm db:migrate
 ## Background jobs
 
 - A job type is a handler in `src/lib/server/jobs/`, registered in `jobs/index.ts`.
-- Handlers get `{ db, payload, now }`. Use `now`, never `new Date()`, so tests can pin the time.
+- Handlers get `{ db, mailer, origin, payload, now }`. Use `now`, never `new Date()`, so tests can pin the time, and `origin` for links in mail.
 - Queue jobs with `enqueue()`. Give a job a `key` when it must only ever be queued once, like `mark-overdue:2026-10-14`.
 - A handler that throws runs again later, up to five attempts (see `retryDelay` in `runner.ts`).
 

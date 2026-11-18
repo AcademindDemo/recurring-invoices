@@ -1,5 +1,7 @@
+import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Db } from '../db/client.ts';
+import { recurringSchedule } from '../db/schema.ts';
 import { createTestClient, createTestDb, createTestUser } from '../db/testing.ts';
 import { parseForm } from '../forms.ts';
 import {
@@ -7,6 +9,7 @@ import {
 	createSchedule,
 	getSchedule,
 	scheduleInput,
+	schedulesBillingBy,
 	upcomingBillingDates,
 	type ScheduleFormValues
 } from './schedules.ts';
@@ -74,6 +77,35 @@ describe('schedules', () => {
 		const otherUserId = createTestUser(db, 'Tama Ngata').id;
 
 		expect(getSchedule(db, otherUserId, created.id)).toBeUndefined();
+	});
+
+	it('bills first on the first billing date', () => {
+		const { data } = parseForm(scheduleInput, { ...formValues, clientId: String(clientId) });
+
+		expect(createSchedule(db, userId, data!).nextBillingOn).toBe('2027-01-31');
+	});
+
+	it('finds every account’s active schedules that bill by a day', () => {
+		const scheduleFrom = (ownerId: string, ownerClientId: number, firstBillingDate: string) => {
+			const { data } = parseForm(scheduleInput, {
+				...formValues,
+				clientId: String(ownerClientId),
+				firstBillingDate
+			});
+			return createSchedule(db, ownerId, data!).id;
+		};
+		const otherUserId = createTestUser(db, 'Tama Ngata').id;
+		const january = scheduleFrom(userId, clientId, '2027-01-31');
+		const february = scheduleFrom(otherUserId, createTestClient(db, otherUserId).id, '2027-02-15');
+		const paused = scheduleFrom(userId, clientId, '2027-01-01');
+		db.update(recurringSchedule)
+			.set({ status: 'paused' })
+			.where(eq(recurringSchedule.id, paused))
+			.run();
+
+		expect(schedulesBillingBy(db, '2027-01-30')).toEqual([]);
+		expect(schedulesBillingBy(db, '2027-01-31').map(({ id }) => id)).toEqual([january]);
+		expect(schedulesBillingBy(db, '2027-02-15').map(({ id }) => id)).toEqual([january, february]);
 	});
 });
 

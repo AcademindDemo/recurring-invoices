@@ -15,6 +15,29 @@ export type Mailer = { send(mail: Mail): Promise<void> };
 
 export type PreviewMail = Mail & { from: string; sentAt: string };
 
+export type MailSettings = {
+	MAIL_TRANSPORT: 'preview' | 'smtp';
+	MAIL_FROM: string;
+	MAIL_PREVIEW_DIR: string;
+	SMTP_HOST: string;
+	SMTP_PORT: number;
+	SMTP_USER?: string;
+	SMTP_PASSWORD?: string;
+};
+
+/** Sends through SMTP when MAIL_TRANSPORT is `smtp`, otherwise writes previews. */
+export function createMailer(settings: MailSettings): Mailer {
+	return settings.MAIL_TRANSPORT === 'smtp'
+		? createSmtpMailer({
+				from: settings.MAIL_FROM,
+				host: settings.SMTP_HOST,
+				port: settings.SMTP_PORT,
+				user: settings.SMTP_USER,
+				password: settings.SMTP_PASSWORD
+			})
+		: createPreviewMailer({ dir: settings.MAIL_PREVIEW_DIR, from: settings.MAIL_FROM });
+}
+
 /** Writes every mail as a JSON file into `dir` instead of sending it. */
 export function createPreviewMailer({ dir, from }: { dir: string; from: string }): Mailer {
 	return {

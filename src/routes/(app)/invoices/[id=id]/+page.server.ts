@@ -21,7 +21,7 @@ export const load: PageServerLoad = ({ params }) => {
 		balance: balanceDue(invoice.total, invoice.payments),
 		paymentInstructions,
 		timeZone,
-		today: today()
+		today: today(new Date(), timeZone)
 	};
 };
 

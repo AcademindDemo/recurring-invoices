@@ -33,7 +33,7 @@ describe('getDashboard', () => {
 		for (const { id } of sent)
 			db.update(invoice).set({ status: 'sent' }).where(eq(invoice.id, id)).run();
 
-		expect(getDashboard(db, userId)).toMatchObject({
+		expect(getDashboard(db, userId, 'UTC')).toMatchObject({
 			outstanding: [
 				{ currency: 'EUR', total: 200000 },
 				{ currency: 'GBP', total: 100000 }
@@ -52,7 +52,9 @@ describe('getDashboard', () => {
 			note: ''
 		});
 
-		expect(getDashboard(db, userId).outstanding).toEqual([{ currency: 'EUR', total: 75000 }]);
+		expect(getDashboard(db, userId, 'UTC').outstanding).toEqual([
+			{ currency: 'EUR', total: 75000 }
+		]);
 	});
 
 	it('sums the payments received this month', () => {
@@ -64,13 +66,13 @@ describe('getDashboard', () => {
 		pay(20000, '2026-05-02');
 		pay(30000, '2026-05-14');
 
-		const dashboard = getDashboard(db, userId, new Date('2026-05-18T12:00:00Z'));
+		const dashboard = getDashboard(db, userId, 'UTC', new Date('2026-05-18T12:00:00Z'));
 
 		expect(dashboard.receivedThisMonth).toEqual([{ currency: 'EUR', total: 50000 }]);
 	});
 
 	it('starts empty', () => {
-		expect(getDashboard(db, userId)).toEqual({
+		expect(getDashboard(db, userId, 'UTC')).toEqual({
 			outstanding: [],
 			receivedThisMonth: [],
 			drafts: 0,

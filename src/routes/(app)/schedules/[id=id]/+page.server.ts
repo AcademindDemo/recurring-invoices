@@ -11,9 +11,11 @@ export const load: PageServerLoad = ({ params }) => {
 	const schedule = getSchedule(db, user.id, params.id);
 	if (!schedule) error(404, 'Schedule not found');
 
+	const { currency, timeZone } = getSettings(db, user.id);
+
 	return {
 		schedule,
-		currency: getSettings(db, user.id).currency,
-		upcoming: upcomingBillingDates(schedule, today(), 3)
+		currency,
+		upcoming: upcomingBillingDates(schedule, today(new Date(), timeZone), 3)
 	};
 };

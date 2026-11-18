@@ -46,10 +46,10 @@ export function countDrafts(db: Db, userId: string) {
 	return row.drafts;
 }
 
-export function getDashboard(db: Db, userId: string, now = new Date()) {
+export function getDashboard(db: Db, userId: string, timeZone: string, now = new Date()) {
 	return {
 		outstanding: outstandingTotals(db, userId),
-		receivedThisMonth: receivedInMonth(db, userId, today(now).slice(0, 7)),
+		receivedThisMonth: receivedInMonth(db, userId, today(now, timeZone).slice(0, 7)),
 		drafts: countDrafts(db, userId),
 		overdueInvoices: listInvoices(db, userId, { status: 'overdue', sort: 'due' }),
 		recentInvoices: listInvoices(db, userId).slice(0, 5)

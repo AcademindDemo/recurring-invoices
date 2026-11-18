@@ -134,9 +134,14 @@ export const recurringSchedule = sqliteTable(
 		taxRate: integer('tax_rate').notNull(),
 		notes: text('notes'),
 		status: text('status', { enum: scheduleStatuses }).notNull().default('active'),
+		// YYYY-MM-DD; the billing date the schedule bills next, null once it has ended
+		nextBillingOn: text('next_billing_on'),
 		createdAt: createdAt()
 	},
-	(table) => [index('recurring_schedule_user_id_idx').on(table.userId)]
+	(table) => [
+		index('recurring_schedule_user_id_idx').on(table.userId),
+		index('recurring_schedule_status_next_billing_on_idx').on(table.status, table.nextBillingOn)
+	]
 );
 
 export const recurringScheduleLine = sqliteTable(
