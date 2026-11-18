@@ -1,0 +1,17 @@
+{
+	"permissions": {
+		"allow": [
+			"Bash(pnpm lint)",
+			"Bash(pnpm check)",
+			"Bash(pnpm test)",
+			"Bash(pnpm test:e2e)",
+			"Bash(pnpm verify)"
+		],
+		"ask": ["Bash(git push *)"],
+		"deny": ["Read(./.env)", "Bash(pnpm db:push *)"]
+	},
+	"extraKnownMarketplaces": {
+		"team-tools": { "source": { "source": "directory", "path": "./team-tools" } }
+	},
+	"enabledPlugins": { "release-readiness@team-tools": true }
+}

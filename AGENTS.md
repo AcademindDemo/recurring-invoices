@@ -18,6 +18,7 @@ pnpm db:migrate
 - `pnpm test`: unit tests (Vitest).
 - `pnpm test:e2e`: Playwright against a fresh `e2e.db`.
 - `pnpm jobs:run`: runs the background jobs that are due.
+- `pnpm verify`: everything CI runs (lint, types, unit tests, e2e). Run it before you push.
 
 ## Layout
 
@@ -47,3 +48,9 @@ pnpm db:migrate
 - Handlers get `{ db, payload, now }`. Use `now`, never `new Date()`, so tests can pin the time.
 - Queue jobs with `enqueue()`. Give a job a `key` when it must only ever be queued once, like `mark-overdue:2026-10-14`.
 - A handler that throws runs again later, up to five attempts (see `retryDelay` in `runner.ts`).
+
+## Database changes
+
+- Change `src/lib/server/db/schema.ts`, then run `pnpm db:generate --name <what-changed>` and `pnpm db:migrate`. Commit the migration with the schema change.
+- Never run `pnpm db:push`: it changes your `local.db` without a migration, so nobody else's database gets the change.
+- Never edit a migration that is on `main`; add a new one.
