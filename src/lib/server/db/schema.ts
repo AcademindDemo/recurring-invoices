@@ -54,10 +54,13 @@ export const invoice = sqliteTable(
 		// The date of the payment that covered the total
 		paidOn: text('paid_on'),
 		scheduleId: integer('schedule_id').references(() => recurringSchedule.id),
+		// The schedule's billing date this invoice is for: one invoice per date
+		billingDate: text('billing_date'),
 		createdAt: createdAt()
 	},
 	(table) => [
 		uniqueIndex('invoice_number_idx').on(table.userId, table.numberYear, table.numberSequence),
+		uniqueIndex('invoice_schedule_billing_date_idx').on(table.scheduleId, table.billingDate),
 		index('invoice_client_id_idx').on(table.clientId)
 	]
 );

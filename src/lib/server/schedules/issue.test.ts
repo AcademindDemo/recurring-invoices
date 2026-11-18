@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { Db } from '../db/client.ts';
 import { createTestClient, createTestDb, createTestUser } from '../db/testing.ts';
 import type { Mail, Mailer } from '../email/mailer.ts';
-import { getInvoice } from '../invoices/invoices.ts';
+import { getInvoice, listInvoices } from '../invoices/invoices.ts';
 import { createDefaultSettings } from '../settings.ts';
 import { issueScheduledInvoice } from './issue.ts';
 import { createSchedule } from './schedules.ts';
@@ -12,8 +12,13 @@ describe('issueScheduledInvoice', () => {
 	let userId: string;
 	let scheduleId: number;
 	let sent: Mail[];
+	let failNextSend: boolean;
 	const mailer: Mailer = {
 		async send(mail) {
+			if (failNextSend) {
+				failNextSend = false;
+				throw new Error('SMTP timeout');
+			}
 			sent.push(mail);
 		}
 	};
@@ -21,6 +26,7 @@ describe('issueScheduledInvoice', () => {
 	beforeEach(() => {
 		db = createTestDb();
 		sent = [];
+		failNextSend = false;
 		userId = createTestUser(db).id;
 		createDefaultSettings(db, userId, 'Ana Silva Design');
 		const clientId = createTestClient(db, userId).id;
@@ -64,5 +70,26 @@ describe('issueScheduledInvoice', () => {
 		const second = await issueScheduledInvoice(db, mailer, userId, scheduleId, '2027-02-28');
 
 		expect(second.invoice?.number).toBe('INV-2027-0002');
+	});
+
+	it('bills a date once when a retry runs it again after the email failed', async () => {
+		failNextSend = true;
+		await expect(
+			issueScheduledInvoice(db, mailer, userId, scheduleId, '2027-01-31')
+		).rejects.toThrow('SMTP timeout');
+
+		const retried = await issueScheduledInvoice(db, mailer, userId, scheduleId, '2027-01-31');
+
+		expect(listInvoices(db, userId)).toHaveLength(1);
+		expect(retried.invoice).toMatchObject({ number: 'INV-2027-0001', status: 'sent' });
+		expect(sent).toHaveLength(1);
+	});
+
+	it('sends nothing when the date was already sent', async () => {
+		await issueScheduledInvoice(db, mailer, userId, scheduleId, '2027-01-31');
+		const again = await issueScheduledInvoice(db, mailer, userId, scheduleId, '2027-01-31');
+
+		expect(again.invoice).toMatchObject({ number: 'INV-2027-0001', status: 'sent' });
+		expect(sent).toHaveLength(1);
 	});
 });

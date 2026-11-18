@@ -120,13 +120,17 @@ export function getInvoice(db: Db, userId: string, id: number) {
 		.sync();
 }
 
-type CreateOptions = { prefix: string; currency: string; scheduleId?: number };
+type CreateOptions = {
+	prefix: string;
+	currency: string;
+	schedule?: { id: number; billingDate: string };
+};
 
 export function createInvoice(
 	db: Db,
 	userId: string,
 	input: InvoiceInput,
-	{ prefix, currency, scheduleId }: CreateOptions
+	{ prefix, currency, schedule }: CreateOptions
 ) {
 	const year = Number(input.issueDate.slice(0, 4));
 	return db.transaction((tx) => {
@@ -144,7 +148,8 @@ export function createInvoice(
 				currency,
 				taxRate: input.taxRate,
 				notes: input.notes || null,
-				scheduleId,
+				scheduleId: schedule?.id,
+				billingDate: schedule?.billingDate,
 				...calculateTotals(input.lines, input.taxRate)
 			})
 			.returning()

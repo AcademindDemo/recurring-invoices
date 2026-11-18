@@ -9,6 +9,10 @@ test.beforeEach(async ({ page }) => {
 test('creates a monthly schedule that bills month ends', async ({ page }) => {
 	await page.goto('/schedules/new');
 	await page.getByRole('combobox', { name: 'Client' }).selectOption('Kauri Studio');
+	await expect(page.getByRole('combobox', { name: 'How often' }).locator('option')).toHaveText([
+		'Every month',
+		'Every year'
+	]);
 	await page.getByLabel('First billing date').fill('2099-01-31');
 	await page.getByLabel('Tax rate (%)').fill('19');
 	await page.getByLabel('Description').fill('Design retainer');

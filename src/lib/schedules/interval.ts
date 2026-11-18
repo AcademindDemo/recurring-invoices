@@ -2,5 +2,5 @@
 export const scheduleIntervals = [1, 12] as const;
 
 export function formatInterval(months: number): string {
-	return `Every ${months} months`;
+	return months === 12 ? 'Every year' : 'Every month';
 }
