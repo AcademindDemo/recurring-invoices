@@ -1,0 +1,17 @@
+{
+	"name": "team-tools",
+	"owner": {
+		"name": "Fernbill"
+	},
+	"metadata": {
+		"description": "The Fernbill team's Claude Code plugins."
+	},
+	"plugins": [
+		{
+			"name": "release-readiness",
+			"source": "./plugins/release-readiness",
+			"description": "Checks that a project is ready to release, and rejects invalid JSON after edits.",
+			"version": "1.0.0"
+		}
+	]
+}

@@ -1,0 +1,1 @@
+ALTER TABLE `invoice` ADD `sent_at` integer;

@@ -1,0 +1,6 @@
+{
+	"name": "release-readiness",
+	"version": "1.0.0",
+	"description": "Checks a project is ready to release, and rejects edits that leave a JSON file invalid.",
+	"author": { "name": "mia" }
+}
